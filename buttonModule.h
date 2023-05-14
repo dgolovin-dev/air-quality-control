@@ -1,43 +1,42 @@
 #include "./uniTimer.h"
 
-class ButtonModule {
-  private:
-    typedef void (*Handler)(void*,bool);
+class ButtonModule {  
+  public:
+    struct Args {
+      bool* outValue;
+      uint8_t pin;
+      UniTimer* timer;
+      unsigned int updatePeriod;      
+    };
 
-    static void functionAdapter(void h(bool), bool v) {
-      h(v);
+    ButtonModule(Args args){
+      this->initialized = false;
+      this->args = args;
+      args.timer->every(args.updatePeriod, &this->update, this);
     }
-
-    bool initialized;
-    byte pin;
-    bool* state;
     
+  private:
+    Args args;
+    bool initialized;    
+
     bool update() {
       if(!this->initialized) {
-        pinMode(this->pin, INPUT);
+        pinMode(this->args.pin, INPUT);
         //Serial.print("init button pin ");
         //Serial.println(this->pin);
         this->initialized = true;
       } else {
-        auto signal = digitalRead(this->pin);
+        auto signal = digitalRead(this->args.pin);
    
-        bool state = *(this->state);
+        bool state = *(this->args.outValue);
         if(signal == HIGH) {
           state = true;
         }
         if(signal == LOW) {
           state = false;
         }
-        *(this->state) = state;
+        *(this->args.outValue) = state;
       }
       return true;
     }   
-  public:
-    template <size_t max_tasks>
-    ButtonModule(bool* field, byte pin, unsigned long checkPeriod, UniTimer<max_tasks>* timer){
-      this->initialized = false;
-      this->state = field;
-      this->pin = pin;
-      timer->every(checkPeriod, &this->update, this);
-    }
 };

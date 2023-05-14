@@ -1,29 +1,76 @@
+#include "HardwareSerial.h"
 #ifndef DEFINITION_UNITITMER
 #define DEFINITION_UNITITMER
 
-#include "./arduino-timer.h"
 
-template<size_t max_tasks, class BaseTimer = Timer<max_tasks, millis, void*>>
-class UniTimer : private BaseTimer {
-  private:
-  static bool functionAdapter(bool h()) {
-    return h();
-  }
-
+class UniTimer {
   public: 
-    template<class T = void*, typename H = bool (T::*)()>
+    typedef void (*Handler)(void* ctx);
+    struct ScheduledTask {
+      bool active = false;
+      Handler handler;
+      void* ctx;
+      unsigned long start;
+      unsigned long period;
+      unsigned long repeatable;      
+    };
 
-    void* every(unsigned long interval, H h, T* opaque){
-      return this->BaseTimer::every(interval, (bool (*)(void*)) h, (void*)opaque);
+    UniTimer(ScheduledTask* tasks, unsigned int tasksCount) {
+      this->tasks = tasks;
+      this->tasksCount = tasksCount;
     }
 
-    void* every(unsigned long interval, bool h()){
+    template<class T = void*, typename H = void (T::*)()>
+    int every(unsigned long interval, H h, T* ctx){
+      return this->every(interval, (void (*)(void*)) h, (void*)ctx);
+    }
+
+    int every(unsigned long interval, void h()){
       return this->every(interval, this->functionAdapter, h);
     }
 
-    tick(){
-      this->BaseTimer::tick();
+    int every(unsigned long interval, Handler handler, void* ctx) {
+      return schedule(interval, true, handler, ctx);
     }
+
+    int schedule(unsigned long period, bool repeatable, Handler handler, void* ctx) {
+      auto t = this->tasks;
+       for(int i = 0; i < this->tasksCount; i++, t++) {
+        if(t->active) continue; 
+        t->active = true;
+        t->handler = handler;
+        t->ctx = ctx;
+        t->start = millis;
+        t->period = period;
+        t->repeatable = repeatable;
+        return i; 
+      }
+      Serial.println("can't schedule a task");
+      return -1;
+    }
+
+    tick(){
+      auto now = millis();
+      auto t = this->tasks;
+      for(unsigned int i = 0; i < this->tasksCount; i++, t++) {
+        if(!t->active) continue; 
+        if(now - t->start < t->period) continue;
+        t->handler(t->ctx);
+        if(t->repeatable) {
+          t->start = millis();
+        } else {
+          t-> active = false;
+        }
+      }
+    }
+
+  private:
+    static void functionAdapter(void h()) {
+      h();
+    }
+
+    ScheduledTask* tasks;
+    unsigned int tasksCount;
 };   
 
 #endif

@@ -1,34 +1,35 @@
 #include "./uniTimer.h"
 
 class FanTriggerModule {
-  private:
-    bool* triggerState;
-    float* ppmState;
+  public:
+    struct Args {
+      float* inPpm;
+      float normalPpm;
+      float highPpm;
+      bool* outValue;
+      UniTimer* timer;
+      unsigned long updatePeriod;
+    };
 
-    float normalPpm;
-    float highPpm;
+    FanTriggerModule(Args args) {
+      this->args = args;
+      args.timer->every(args.updatePeriod, &this->update, this);
+    }
+  private:
+    Args args;
 
     bool update(){
-      bool isOn = *(this->triggerState);
-      if(isOn){
-        if(*(this->ppmState) < this->normalPpm) {
-          *(this->triggerState) = false;
+      if(*(args.outValue)){
+        if(*(args.inPpm) < args.normalPpm) {
+          *(args.outValue) = false;
         }
       } else {
-        if(*(this->ppmState) > this->highPpm) {
-          *(this->triggerState) = true;
+        if(*(args.inPpm) > args.highPpm) {
+          *(args.outValue) = true;
         }
       }            
       return true;
     }
-  public:
-    template <size_t max_tasks>
-    FanTriggerModule(bool* triggerField, float* ppmField, float normalPpm, float highPpm, unsigned long updatePeriod, UniTimer<max_tasks>* timer) {
-      this->triggerState = triggerField;
-      this->ppmState = ppmField;
-      this->normalPpm = normalPpm;
-      this->highPpm = highPpm;
-      timer->every(updatePeriod, &this->update, this);
-    }
+
 
 };

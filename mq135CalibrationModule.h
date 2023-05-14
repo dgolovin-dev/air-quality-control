@@ -1,40 +1,38 @@
 #include <EEPROM.h>
 
 class Mq135CalibrationModule {
+  public:
+    struct Args {
+      float* inRZero;
+      bool* inBtn;
+      unsigned long calibrationDelay;
+      float* outRZero;      
+      unsigned int persistAddr;
+      UniTimer* timer;
+      unsigned long updatePeriod;
+    };
+
+    Mq135CalibrationModule(Args args){
+      this->args = args;
+      args.timer->every(args.updatePeriod, &this->update, this);
+    }
+
   private:
-    float* currentRZeroState;
-    float* calibratedRZeroState;
-    bool* btnState;
-    unsigned long persistDelay;
-    unsigned int persistAddr;
+    Args args;
     bool prevBtnState;
 
-    bool update() {
-      if(this->prevBtnState == false && *(this->btnState) == true) {
+    void update() {
+      if(this->prevBtnState == false && *(args.inBtn) == true) {
         // button pushed
-        if(millis() > this->persistDelay) {
-          EEPROM.put(this->persistAddr, *(this->currentRZeroState));
+        if(millis() > args.calibrationDelay) {
+          EEPROM.put(args.persistAddr, *(args.inRZero));
           Serial.println("calibrated");
         } else {
           Serial.println("calibration skipped");
         }
       }
-      this->prevBtnState = *(this->btnState);
-      EEPROM.get(this->persistAddr, *(this->calibratedRZeroState));
-      return true;
+      this->prevBtnState = *(args.inBtn);
+      EEPROM.get(args.persistAddr, *(args.outRZero));
     }
-  public:
-    template <size_t max_tasks>
-    Mq135CalibrationModule(
-      float* currentRZeroField, float* calibratedRZeroField, bool* btnField,
-      unsigned long persistDelay, unsigned int persistCell, 
-      unsigned long updatePeriod, UniTimer<max_tasks>* timer
-    ){
-      this->currentRZeroState = currentRZeroField;
-      this->calibratedRZeroState = calibratedRZeroField;
-      this->btnState = btnField;
-      this->persistDelay = persistDelay;
-      this->persistAddr = persistAddr;
-      timer->every(updatePeriod, &this->update, this);
-    }
+ 
 };

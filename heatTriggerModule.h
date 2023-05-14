@@ -1,23 +1,26 @@
 #include "./uniTimer.h"
 
 class HeatTriggerModule {
-  private:
-    bool* triggerState;
-    float* temperatureState;
-    float* lowTemperatureState;
-
-    bool update(){
-      auto t = *(this->temperatureState);
-      auto l = *(this->lowTemperatureState);
-      *(this->triggerState) = t < l;
-      return true;
-    }
   public:
-    template <size_t max_tasks>
-    HeatTriggerModule(bool* triggerField, float* temperatureField, float* lowTemperatureField, unsigned long updatePeriod, UniTimer<max_tasks>* timer) {
-      this->triggerState = triggerField;
-      this->temperatureState = temperatureField;
-      this->lowTemperatureState = lowTemperatureField;
-      timer->every(updatePeriod, &this->update, this);
+    struct Args {
+      float* inCurrentTemperature;
+      float* inLowTemperature;
+      bool* outTrigger;
+      UniTimer* timer;
+      unsigned long updatePeriod;
+    };
+
+    HeatTriggerModule(Args args) {
+      this->args = args;
+      args.timer->every(args.updatePeriod, &this->update, this);
     }
-};
+
+  private:
+    Args args;
+
+    void update(){
+      auto t = *(args.inCurrentTemperature);
+      auto l = *(args.inLowTemperature);
+      *(args.outTrigger) = t < l;
+    }
+ };

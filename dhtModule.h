@@ -2,28 +2,37 @@
 #include "./uniTimer.h"
 
 class DhtModule {
+  public:
+    struct Args {
+      float* outHumidity;
+      float* outTemperature;
+      uint8_t dhtType;
+      uint8_t pin;
+      UniTimer* timer;
+      unsigned long updatePeriod;      
+    };
+
+    DhtModule(Args args)
+    : dht(args.pin, args.dhtType) {
+      this->args = args;
+      this->initialized = false;
+      args.timer->every(args.updatePeriod, &this->update, this);
+    }
+
   private:
-    bool initialized;
-    float* humidityState;
-    float* temperatureState;
+    Args args;
     DHT dht;
+    bool initialized;
+
 
     bool update() {
       if(!this->initialized) {
         this->initialized = true;
         this->dht.begin();
       }
-      *(this->humidityState) = this->dht.readHumidity();
-      *(this->temperatureState) = this->dht.readTemperature();
+      *(args.outHumidity) = this->dht.readHumidity();
+      *(args.outTemperature) = this->dht.readTemperature();
       return true;
     } 
-  public:
-    template <size_t max_tasks>
-    DhtModule(float* humidityField, float* temperatureField, byte pin, byte dhtType, unsigned long updatePeriod, UniTimer<max_tasks>* timer)
-    : dht(pin, dhtType) {
-      this->initialized = false;
-      this->humidityState = humidityField;
-      this->temperatureState = temperatureField;
-      timer->every(updatePeriod, &this->update, this);
-    }
+
 };

@@ -10,25 +10,130 @@
 #include "./heatTriggerModule.h"
 #include "./humidifierTriggerModule.h"
 
-auto timer = UniTimer<12>(); 
+const int taskCount = 12;
+UniTimer::ScheduledTask tasks[taskCount];
+auto timer = UniTimer(tasks, taskCount); 
+
 auto registry = Registry();
 
-auto button = ButtonModule(&registry.btn, 12, 100, &timer);
-auto potentiometer = PotentiometerModule(&registry.potentiometer, A0, true, 10, 30, 100, &timer);
+auto button = ButtonModule({  
+  .outValue = &registry.btn, 
+  .pin = 12, 
+  .timer = &timer,
+  .updatePeriod = 100
+});
 
-auto dhtModule = DhtModule(&registry.humidity, &registry.temperature, 2, DHT11, 100, &timer);
+auto potentiometer = PotentiometerModule({
+  .reversed = true, 
+  .minValue = 10.0, 
+  .maxValue = 30.0,
+  .outValue = &registry.potentiometer, 
+  .pin = A0,
+  .timer = &timer,
+  .updatePeriod = 100
+});
 
-auto mq135Module = Mq135Module(&registry.humidity, &registry.temperature, &registry.calibratedRZero, &registry.currentRZero, &registry.ppm, A1, 1, 100, &timer);
-auto mq135CalibrationModule = Mq135CalibrationModule(&registry.currentRZero, &registry.calibratedRZero, &registry.btn, 24L*60*60*1000, 0, 100, &timer);
+auto dhtModule = DhtModule({
+  .outHumidity = &registry.humidity,
+  .outTemperature = &registry.temperature,
+  .dhtType = DHT11,
+  .pin = 2,
+  .timer = &timer,
+  .updatePeriod = 100  
+});
 
-auto fanTrigger = FanTriggerModule(&registry.fanTrigger, &registry.ppm, 600, 800, 100, &timer);
-auto fanRelay = RelayModule(&registry.fanTrigger, &registry.fanRelay, 10000, 60000, 60000, 60L*60*1000, 8, 3, 100, &timer);
 
-auto heatTrigger = HeatTriggerModule(&registry.heatTrigger, &registry.temperature, &registry.potentiometer, 100, &timer);
-auto heatRelay = RelayModule(&registry.heatTrigger, &registry.heatRelay, 10000, 120000, 120000, 60L*60*1000, 8, 4, 100, &timer);
+auto mq135Module = Mq135Module({
+  .inHumidity = &registry.humidity, 
+  .inTemperature = &registry.temperature,
+  .inRZero = &registry.calibratedRZero,
+  .rload = 10,
+  .outRZero = &registry.currentRZero, 
+  .outPpm = &registry.ppm, 
+  .pin = A1, 
+  .timer = &timer,
+  .updatePeriod = 100
+});
+auto mq135CalibrationModule = Mq135CalibrationModule({
+  .inRZero = &registry.currentRZero,
+  .inBtn = &registry.btn,
+  .calibrationDelay = 1000L,
+  .outRZero =  &registry.calibratedRZero,
+  .persistAddr = 0,
+  .timer = &timer,
+  .updatePeriod = 100
+});
 
-auto humidifierTrigger = HumidifierTriggerModule(&registry.humidifierTrigger, &registry.humidity, 40, 100, &timer);
-auto humidifierRelay = RelayModule(&registry.humidifierTrigger, &registry.humidifierRelay, 10000, 120000, 120000, -1, 9, 5, 100, &timer);
+
+// humidity dev +/- 3
+// rload 1k
+// cal rzero = 30
+// 1w later rzero = 16 ???
+// - replaced sensor rload 10k
+// fri rzero 16 (first)
+// sat rzero 44/46/47
+// sun rzero 49/52/50
+
+auto fanTrigger = FanTriggerModule({
+  .inPpm = &registry.ppm,
+  .normalPpm = 600,
+  .highPpm = 800,
+  .outValue = &registry.fanTrigger,
+  .timer = &timer,
+  .updatePeriod = 100
+});
+auto fanRelay = RelayModule({
+  .inTrigger = &registry.fanTrigger,
+  .triggerVerifyPeriod = 10000,
+  .switchOnDuration = 60000,
+  .switchOffDuration = 60000,
+  .maintenancePeriod = 60L*60*1000,
+  .outState = &registry.fanRelay,
+  .highPin = 8,
+  .lowPin = 3,
+  .timer = &timer,
+  .updatePeriod = 100
+});
+
+auto heatTrigger = HeatTriggerModule({
+   .inCurrentTemperature = &registry.temperature,
+   .inLowTemperature = &registry.potentiometer,
+   .outTrigger = &registry.heatTrigger,
+   .timer = &timer,
+   .updatePeriod = 100
+});
+auto heatRelay = RelayModule({
+  .inTrigger = &registry.heatTrigger,
+  .triggerVerifyPeriod = 10000,
+  .switchOnDuration = 120000,
+  .switchOffDuration = 120000,
+  .maintenancePeriod = 60L*60*1000,
+  .outState = &registry.heatRelay,
+  .highPin = 9,
+  .lowPin = 4,
+  .timer = &timer,
+  .updatePeriod = 100
+});
+
+auto humidifierTrigger = HumidifierTriggerModule({
+    .inHumidity = &registry.humidity,
+    .lowHumidity = 40,
+    .outState = &registry.humidifierTrigger,
+    .timer = &timer,
+    .updatePeriod = 100
+});
+auto humidifierRelay = RelayModule({
+  .inTrigger = &registry.humidifierTrigger,
+  .triggerVerifyPeriod = 10000,
+  .switchOnDuration = 120000,
+  .switchOffDuration = 120000,
+  .maintenancePeriod = 60L*60*1000,
+  .outState = &registry.heatRelay,
+  .highPin = 10,
+  .lowPin = 5,
+  .timer = &timer,
+  .updatePeriod = 100
+});
 
 void setup() {  
   Serial.begin(9600);

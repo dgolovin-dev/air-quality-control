@@ -8,7 +8,7 @@ class Registry {
     float humidity = 0;
     float temperature = 0;
 
-    float calibratedRZero = 28;
+    float calibratedRZero = 52;
     float currentRZero = 0;
     float ppm = 0;
 

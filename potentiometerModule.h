@@ -1,31 +1,32 @@
 #include "./uniTimer.h"
 
 class PotentiometerModule {
-  private:
-    bool initialized;
-    byte pin;
-    bool reversed;
-    float* state;
-    float minValue;
-    float maxValue;
+  public: 
+    struct Args {
+      bool reversed;
+      float minValue;
+      float maxValue;
+      float* outValue;
+      uint8_t pin;
+      UniTimer* timer;
+      unsigned long updatePeriod;
+    };
 
-    bool update() {
-      auto signal = analogRead(this->pin);
-      if(reversed) {
-        signal = 1023 - signal;
-      }
-      *(this->state) = this->minValue + (this->maxValue - this->minValue) * (float)signal/1023.0;      
-      return true;
+    PotentiometerModule(Args args) {
+      this->args = args;
+      args.timer->every(args.updatePeriod, &this->update, this);
     }
 
-  public: 
-    template <size_t max_tasks>
-    PotentiometerModule(float* field, byte pin, bool reversed, float minValue, float maxValue, unsigned long updatePeriod, UniTimer<max_tasks>* timer) {
-      this->pin = pin;
-      this->reversed = reversed;
-      this->state = field;
-      this->minValue = minValue;
-      this->maxValue = maxValue;
-      timer->every(updatePeriod, &this->update, this);
+  private:
+    Args args;
+    bool initialized; 
+
+    bool update() {
+      auto signal = analogRead(this->args.pin);
+      if(args.reversed) {
+        signal = 1023 - signal;
+      }
+      *(this->args.outValue) = this->args.minValue + (this->args.maxValue - this->args.minValue) * (float)signal/1023.0;      
+      return true;
     }
 };
