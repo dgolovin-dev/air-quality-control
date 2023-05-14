@@ -8,13 +8,13 @@ class Mq135CalibrationModule {
       unsigned long calibrationDelay;
       float* outRZero;      
       unsigned int persistAddr;
-      UniTimer* timer;
+      Scheduler* timer;
       unsigned long updatePeriod;
     };
 
     Mq135CalibrationModule(Args args){
       this->args = args;
-      args.timer->every(args.updatePeriod, &this->update, this);
+      args.timer->schedule(args.updatePeriod, true, &this->update, this);
     }
 
   private:

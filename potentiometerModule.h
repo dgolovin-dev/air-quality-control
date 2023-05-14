@@ -1,4 +1,4 @@
-#include "./uniTimer.h"
+#include "./scheduler.h"
 
 class PotentiometerModule {
   public: 
@@ -8,13 +8,13 @@ class PotentiometerModule {
       float maxValue;
       float* outValue;
       uint8_t pin;
-      UniTimer* timer;
+      Scheduler* timer;
       unsigned long updatePeriod;
     };
 
     PotentiometerModule(Args args) {
       this->args = args;
-      args.timer->every(args.updatePeriod, &this->update, this);
+      args.timer->schedule(args.updatePeriod, true, &this->update, this);
     }
 
   private:

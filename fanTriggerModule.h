@@ -1,4 +1,4 @@
-#include "./uniTimer.h"
+#include "./scheduler.h"
 
 class FanTriggerModule {
   public:
@@ -7,13 +7,13 @@ class FanTriggerModule {
       float normalPpm;
       float highPpm;
       bool* outValue;
-      UniTimer* timer;
+      Scheduler* timer;
       unsigned long updatePeriod;
     };
 
     FanTriggerModule(Args args) {
       this->args = args;
-      args.timer->every(args.updatePeriod, &this->update, this);
+      args.timer->schedule(args.updatePeriod, true, &this->update, this);
     }
   private:
     Args args;

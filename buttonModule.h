@@ -1,18 +1,18 @@
-#include "./uniTimer.h"
+#include "./scheduler.h"
 
 class ButtonModule {  
   public:
     struct Args {
       bool* outValue;
       uint8_t pin;
-      UniTimer* timer;
+      Scheduler* timer;
       unsigned int updatePeriod;      
     };
 
     ButtonModule(Args args){
       this->initialized = false;
       this->args = args;
-      args.timer->every(args.updatePeriod, &this->update, this);
+      args.timer->schedule(args.updatePeriod, true, &this->update, this);
     }
     
   private:

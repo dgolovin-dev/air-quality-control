@@ -16,13 +16,13 @@ class RelayModule {
       RelayStates* outState;
       uint8_t highPin;
       uint8_t lowPin;
-      UniTimer* timer;
+      Scheduler* timer;
       unsigned long updatePeriod;
     };
 
     RelayModule(Args args) {
       this->args = args;
-      args.timer->every(args.updatePeriod, &this->update, this);
+      args.timer->schedule(args.updatePeriod, true, &this->update, this);
     }
   private:
     Args args;

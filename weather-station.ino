@@ -1,4 +1,4 @@
-#include "./uniTimer.h"
+#include "./scheduler.h"
 #include "./registry.h"
 #include "./buttonModule.h"
 #include "./potentiometerModule.h"
@@ -11,8 +11,8 @@
 #include "./humidifierTriggerModule.h"
 
 const int taskCount = 12;
-UniTimer::ScheduledTask tasks[taskCount];
-auto timer = UniTimer(tasks, taskCount); 
+Scheduler::ScheduledTask tasks[taskCount];
+auto timer = Scheduler(tasks, taskCount); 
 
 auto registry = Registry();
 
@@ -72,7 +72,7 @@ auto mq135CalibrationModule = Mq135CalibrationModule({
 // - replaced sensor rload 10k
 // fri rzero 16 (first)
 // sat rzero 44/46/47
-// sun rzero 49/52/50
+// sun rzero 49/52/50/57
 
 auto fanTrigger = FanTriggerModule({
   .inPpm = &registry.ppm,
@@ -138,7 +138,7 @@ auto humidifierRelay = RelayModule({
 void setup() {  
   Serial.begin(9600);
   Serial.println("setup");
-  timer.every(5000, &registry.printFull, &registry);
+  timer.schedule(5000, true, &registry.printFull, &registry);
 }
 
 void loop() {  

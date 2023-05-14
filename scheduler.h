@@ -2,8 +2,7 @@
 #ifndef DEFINITION_UNITITMER
 #define DEFINITION_UNITITMER
 
-
-class UniTimer {
+class Scheduler {
   public: 
     typedef void (*Handler)(void* ctx);
     struct ScheduledTask {
@@ -15,22 +14,18 @@ class UniTimer {
       unsigned long repeatable;      
     };
 
-    UniTimer(ScheduledTask* tasks, unsigned int tasksCount) {
+    Scheduler(ScheduledTask* tasks, unsigned int tasksCount) {
       this->tasks = tasks;
       this->tasksCount = tasksCount;
     }
 
     template<class T = void*, typename H = void (T::*)()>
-    int every(unsigned long interval, H h, T* ctx){
-      return this->every(interval, (void (*)(void*)) h, (void*)ctx);
+    int schedule(unsigned long interval, bool repeatable, H h, T* ctx){
+      return this->schedule(interval, repeatable, (void (*)(void*)) h, (void*)ctx);
     }
 
-    int every(unsigned long interval, void h()){
-      return this->every(interval, this->functionAdapter, h);
-    }
-
-    int every(unsigned long interval, Handler handler, void* ctx) {
-      return schedule(interval, true, handler, ctx);
+    int schedule(unsigned long interval, bool repeatable, void h()){
+      return this->schedule(interval, repeatable, this->functionAdapter, h);
     }
 
     int schedule(unsigned long period, bool repeatable, Handler handler, void* ctx) {
@@ -71,6 +66,5 @@ class UniTimer {
 
     ScheduledTask* tasks;
     unsigned int tasksCount;
-};   
-
+};
 #endif

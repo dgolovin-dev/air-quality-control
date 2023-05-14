@@ -1,5 +1,5 @@
 #include "DHT.h"
-#include "./uniTimer.h"
+#include "./scheduler.h"
 
 class DhtModule {
   public:
@@ -8,7 +8,7 @@ class DhtModule {
       float* outTemperature;
       uint8_t dhtType;
       uint8_t pin;
-      UniTimer* timer;
+      Scheduler* timer;
       unsigned long updatePeriod;      
     };
 
@@ -16,7 +16,7 @@ class DhtModule {
     : dht(args.pin, args.dhtType) {
       this->args = args;
       this->initialized = false;
-      args.timer->every(args.updatePeriod, &this->update, this);
+      args.timer->schedule(args.updatePeriod, true, &this->update, this);
     }
 
   private:

@@ -10,13 +10,13 @@ class Mq135Module {
       float* outRZero;
       float* outPpm;
       uint8_t pin;
-      UniTimer* timer;
+      Scheduler* timer;
       unsigned long updatePeriod;
     };
 
     Mq135Module(Args args) {
       this->args = args;
-      args.timer->every(args.updatePeriod, &this->update, this);
+      args.timer->schedule(args.updatePeriod, true, &this->update, this);
     }
   private:
     Args args;

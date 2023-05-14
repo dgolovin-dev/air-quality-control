@@ -1,4 +1,4 @@
-#include "./uniTimer.h"
+#include "./scheduler.h"
 
 class HeatTriggerModule {
   public:
@@ -6,13 +6,13 @@ class HeatTriggerModule {
       float* inCurrentTemperature;
       float* inLowTemperature;
       bool* outTrigger;
-      UniTimer* timer;
+      Scheduler* timer;
       unsigned long updatePeriod;
     };
 
     HeatTriggerModule(Args args) {
       this->args = args;
-      args.timer->every(args.updatePeriod, &this->update, this);
+      args.timer->schedule(args.updatePeriod, true, &this->update, this);
     }
 
   private:
