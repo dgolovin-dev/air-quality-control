@@ -96,9 +96,9 @@ void Registry::printToSerial() {
     lcd->print("  "); // CO2 length may differ
 
     lcd->setCursor(0,1);
-    lcd->print("t");
+    lcd->print("tt");
     lcd->print(this->targetTemperature,1);
-    lcd->print("u");
+    lcd->print(" u");
     lcd->print(this->humidifierTrigger);
     lcd->print(this->humidifierRelay);
     lcd->print("e");
