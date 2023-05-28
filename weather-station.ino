@@ -17,7 +17,7 @@ auto timer = Scheduler(tasks, taskCount);
 auto registry = Registry();
 
 auto button = ButtonModule({  
-  .outValue = &registry.btn, 
+  .outValue = &registry.calBtn, 
   .pin = 12, 
   .timer = &timer,
   .updatePeriod = 100
@@ -27,7 +27,7 @@ auto potentiometer = PotentiometerModule({
   .reversed = true, 
   .minValue = 10.0, 
   .maxValue = 30.0,
-  .outValue = &registry.potentiometer, 
+  .outValue = &registry.targetTemperature, 
   .pin = A0,
   .timer = &timer,
   .updatePeriod = 100
@@ -56,7 +56,7 @@ auto mq135Module = Mq135Module({
 });
 auto mq135CalibrationModule = Mq135CalibrationModule({
   .inRZero = &registry.currentRZero,
-  .inBtn = &registry.btn,
+  .inBtn = &registry.calBtn,
   .calibrationDelay = 1000L,
   .outRZero =  &registry.calibratedRZero,
   .persistAddr = 0,
@@ -72,8 +72,12 @@ auto mq135CalibrationModule = Mq135CalibrationModule({
 // - replaced sensor rload 10k
 // fri rzero 16 (first)
 // sat rzero 44/46/47
-// sun rzero 49/52/50/57
-
+// sun rzero 49/52/50/57 (rain) // humidity correction wrong?
+// mon 52/49/47/43 (clear)
+// tue 43
+// wed 45/33
+// thu 47/46
+// mon 45
 auto fanTrigger = FanTriggerModule({
   .inPpm = &registry.ppm,
   .normalPpm = 600,
@@ -97,7 +101,7 @@ auto fanRelay = RelayModule({
 
 auto heatTrigger = HeatTriggerModule({
    .inCurrentTemperature = &registry.temperature,
-   .inLowTemperature = &registry.potentiometer,
+   .inLowTemperature = &registry.targetTemperature,
    .outTrigger = &registry.heatTrigger,
    .timer = &timer,
    .updatePeriod = 100
@@ -135,10 +139,21 @@ auto humidifierRelay = RelayModule({
   .updatePeriod = 100
 });
 
-void setup() {  
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  lcd.init();  
+  lcd.backlight();
+  lcd.clear();
+  
   Serial.begin(9600);
   Serial.println("setup");
-  timer.schedule(5000, true, &registry.printFull, &registry);
+  timer.schedule(1000, true, &printState);
+}
+
+void printState() {
+  registry.printToSerial();
+  registry.printToDisplay16x2(&lcd);
 }
 
 void loop() {  
