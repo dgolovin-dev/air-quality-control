@@ -1,6 +1,6 @@
 # Автоматическое проветривание помещений
 
-Arduino Sketch for Air Quality control. Arduino Nano, DHT-22, MH-Z19B, RobotDyn Dimmer 4A-400V.
+Arduino Sketch for air quality control. Arduino Nano, DHT-22, MH-Z19B, RobotDyn Dimmer 4A-400V.
 
 ## Введение
 
